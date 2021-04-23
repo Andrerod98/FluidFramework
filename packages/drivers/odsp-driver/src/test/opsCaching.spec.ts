@@ -38,14 +38,7 @@ class MockCache implements ICache {
         return JSON.stringify(content);
     }
 
-    public remove() {
-        // Do not reset this.writeCount such that we can test that writes happened, but later on data was cleared
-        this.writeCount++;
-        this.opsWritten++;
-        this.data = {};
-    }
-
-    public data: { [key: string]: any; } = {};
+    public readonly data: { [key: string]: any; } = {};
 }
 
 async function validate(
@@ -100,7 +93,8 @@ async function runTestNoTimer(
     initialSeq: number,
     mockData: MyDataInput[],
     expected: { [key: number]: (MyDataInput | undefined)[]},
-    initialWritesExpected: number)
+    initialWritesExpected: number,
+    totalWritesExpected: number)
 {
     const mockCache = new MockCache();
 
@@ -110,7 +104,7 @@ async function runTestNoTimer(
         mockCache,
         batchSize,
         -1, // timerGranularity
-        10, // totalOpsToCache
+        5000, // totalOpsToCache
     );
 
     cache.addOps(mockData);
@@ -150,7 +144,7 @@ export async function runTestWithTimer(
         mockCache,
         batchSize,
         1, // timerGranularity
-        10, // totalOpsToCache
+        5000, // totalOpsToCache
     );
 
     cache.addOps(mockData);
@@ -172,7 +166,7 @@ export async function runTest(
     initialWritesExpected: number,
     totalWritesExpected: number)
 {
-    await runTestNoTimer(batchSize, initialSeq, mockData, expected, initialWritesExpected);
+    await runTestNoTimer(batchSize, initialSeq, mockData, expected, initialWritesExpected, totalWritesExpected);
     await runTestWithTimer(batchSize, initialSeq, mockData, expected, initialWritesExpected, totalWritesExpected);
 }
 
@@ -252,28 +246,6 @@ describe("OpsCache", () => {
             },
             2,
             2);
-    });
-
-    it("Too many ops", async () => {
-        await runTest(
-            5,
-            100,
-            [
-                { sequenceNumber: 105, data: "105" },
-                { sequenceNumber: 106, data: "106" },
-                { sequenceNumber: 107, data: "107" },
-                { sequenceNumber: 108, data: "108" },
-                { sequenceNumber: 109, data: "109" },
-                { sequenceNumber: 110, data: "110" },
-                { sequenceNumber: 111, data: "111" },
-                { sequenceNumber: 112, data: "112" },
-                { sequenceNumber: 113, data: "113" },
-                { sequenceNumber: 114, data: "114" },
-                { sequenceNumber: 115, data: "115" },
-            ],
-            {},
-            3,
-            3);
     });
 });
 

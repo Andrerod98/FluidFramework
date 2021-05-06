@@ -1,1 +1,0 @@
-# @fluidframework/tinylicious-driver
